@@ -99,27 +99,28 @@
             <p class="text-stone-600 mt-3">Akses informasi cagar budaya dengan pengalaman visual terlengkap melalui tautan fitur dan galeri card di bawah ini.</p>
         </div>
 
-        <!-- Widget Jumlah Pengunjung Berdasarkan Kategori Jelajah -->
+        <!-- Widget Jumlah Pengunjung Berdasarkan Kategori Jelajah (Dapat Diklik & Real-time dari 0) -->
         <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 mb-16">
             <h3 class="text-sm font-black text-stone-900 uppercase tracking-wider mb-4 text-center">📊 Statistik Pengunjung Berdasarkan Kategori Jelajah</h3>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                <div class="p-4 bg-amber-50 rounded-xl border border-amber-100">
+                <div onclick="tambahPengunjung('Situs')" class="p-4 bg-amber-50 rounded-xl border border-amber-100 cursor-pointer hover:bg-amber-100 transition transform hover:scale-105">
                     <span class="block text-2xl font-black text-amber-700" id="statSitus">0</span>
                     <span class="text-xs font-bold text-stone-600 uppercase">🗿 Situs</span>
                 </div>
-                <div class="p-4 bg-stone-100 rounded-xl border border-stone-200">
+                <div onclick="tambahPengunjung('Struktur')" class="p-4 bg-stone-100 rounded-xl border border-stone-200 cursor-pointer hover:bg-stone-200 transition transform hover:scale-105">
                     <span class="block text-2xl font-black text-stone-700" id="statStruktur">0</span>
                     <span class="text-xs font-bold text-stone-600 uppercase">🧱 Struktur</span>
                 </div>
-                <div class="p-4 bg-teal-50 rounded-xl border border-teal-100">
+                <div onclick="tambahPengunjung('Bangunan')" class="p-4 bg-teal-50 rounded-xl border border-teal-100 cursor-pointer hover:bg-teal-100 transition transform hover:scale-105">
                     <span class="block text-2xl font-black text-teal-700" id="statBangunan">0</span>
                     <span class="text-xs font-bold text-stone-600 uppercase">🏛️ Bangunan</span>
                 </div>
-                <div class="p-4 bg-purple-50 rounded-xl border border-purple-100">
+                <div onclick="tambahPengunjung('Benda')" class="p-4 bg-purple-50 rounded-xl border border-purple-100 cursor-pointer hover:bg-purple-100 transition transform hover:scale-105">
                     <span class="block text-2xl font-black text-purple-700" id="statBenda">0</span>
                     <span class="text-xs font-bold text-stone-600 uppercase">🏺 Benda</span>
                 </div>
             </div>
+            <p class="text-[11px] text-center text-stone-400 mt-3 italic">*Klik pada salah satu kotak kategori di atas untuk menambah jumlah pengunjung secara real-time.</p>
         </div>
 
         <!-- 3 Item Fitur dengan Tautan Aktif -->
@@ -410,12 +411,12 @@
         var petaSudahDimuat = false;
         var isAdminLoggedIn = false;
 
-        // --- SISTEM PENGUNJUNG BERDASARKAN KATEGORI JELAJAH ---
+        // --- SISTEM PENGUNJUNG BERDASARKAN KATEGORI JELAJAH (Dimulai dari angka 0) ---
         var statistikPengunjung = {
-            Situs: parseInt(localStorage.getItem('stat_Situs') || '120'),
-            Struktur: parseInt(localStorage.getItem('stat_Struktur') || '85'),
-            Bangunan: parseInt(localStorage.getItem('stat_Bangunan') || '210'),
-            Benda: parseInt(localStorage.getItem('stat_Benda') || '95')
+            Situs: parseInt(localStorage.getItem('stat_Situs') || '0'),
+            Struktur: parseInt(localStorage.getItem('stat_Struktur') || '0'),
+            Bangunan: parseInt(localStorage.getItem('stat_Bangunan') || '0'),
+            Benda: parseInt(localStorage.getItem('stat_Benda') || '0')
         };
 
         function perbaruiUIStatistik() {
