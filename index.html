@@ -411,7 +411,7 @@
         var petaSudahDimuat = false;
         var isAdminLoggedIn = false;
 
-        // --- SISTEM PENGUNJUNG ONLINE & REAL-TIME (Langsung Sinkron ke Spreadsheet Tanpa LocalStorage) ---
+        // --- SISTEM PENGUNJUNG ONLINE & REAL-TIME (Sinkronisasi Langsung ke Spreadsheet via GET) ---
         var statistikPengunjung = {
             Situs: 0,
             Struktur: 0,
@@ -437,13 +437,11 @@
             }
             perbaruiUIStatistik();
 
-            // Kirim pembaruan statistik secara asynchronous langsung ke Google Apps Script tanpa local/session storage
-            fetch(gasUrl + "?action=updateStat", {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: "updateStat", statistik: statistikPengunjung })
-            }).catch(err => console.log("Gagal menyinkronkan statistik ke spreadsheet:", err));
+            // Mengirim pembaruan statistik secara asynchronous ke backend Google Apps Script melalui metode GET untuk menghindari CORS
+            fetch(gasUrl + "?action=updateStat&kategori=" + encodeURIComponent(kategori), {
+                method: 'GET',
+                mode: 'no-cors'
+            }).catch(err => console.log("Gagal menyinkronkan statistik online ke spreadsheet:", err));
         }
 
         // --- SISTEM AUDIO LATAR & TOMBOL SOUND ON/OFF & DRAGGABLE AMAN KLIK ---
@@ -567,7 +565,7 @@
         }
 
         // --- URL Google Apps Script Anda[cite: 1] ---
-        var gasUrl = 'https://script.google.com/macros/s/AKfycbz8UbDYksLSZJBAQdQv6HE3Aa62j-NNdkGNwY-7-_f1aGDry_wpyb3d8AZo9ICbitsdaQ/exec';
+        var gasUrl = 'https://script.google.com/macros/s/AKfycbwyC3bL6s6v9V6qXSIBvtd9zOoCvf0gXlf3BhMhgAuo7fR2J48wOlzEbISIfPVESg4HDQ/exec';
 
         function inisialisasiPeta() {
             if (petaSudahDimuat) return;
@@ -974,12 +972,13 @@
             if (map) map.setZoom(11, { animate: true });
         }
 
-        // Fetch data & statistik langsung dari Google Apps Script saat halaman dimuat (tanpa local storage)
+        // Fetch data & statistik langsung dari Google Apps Script saat halaman dimuat (tanpa local storage)[cite: 1]
         fetch(gasUrl)
             .then(response => response.json())
             .then(data => {
                 if (data && data.statistik) {
                     statistikPengunjung = data.statistik;
+                    perbaruiUIStatistik();
                 }
                 
                 // Secara otomatis mencatat kunjungan baru ke spreadsheet tanpa menggunakan session/local storage
