@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPK - Sistem Informasi Kebudayaan Sulawesi Tengah</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet CSS for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    
+    <!-- Pannellum CSS for 360 Viewer -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"/>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Integrasi Style Responsive Card dari card.txt -->
+    <style id="info-gtk-mobile-card-layout">
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .leaflet-div-icon { background: transparent; border: none; }
+        #draggableSoundContainer {
+            touch-action: none;
+            user-select: none;
+            cursor: move;
+        }
+        /* CSS Fleksibel untuk Ukuran Video Dokumenter (Width 560, Height 315 / 16:9) */
+        .video-responsive-container {
+            position: relative;
+            width: 100%;
+            max-width: 560px;
+            height: 0;
+            padding-bottom: 56.25%; /* Rasio 16:9 */
+            margin: 0 auto;
+        }
+        .video-responsive-container iframe,
+        .video-responsive-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        @media screen and (max-width: 767.98px) {
+          #fit-primary-card-sections {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            gap: 0 !important;
+          }
+
+          #fit-primary-card-sections > .fit-section-host,
+          #fit-primary-card-sections > .fit-section-host.fit-section-host-expanded {
+            display: block !important;
+            grid-column: 1 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+
+          #fit-primary-card-sections .fit-section,
+          #fit-primary-card-sections .card,
+          #fit-primary-card-sections .card-header,
+          #fit-primary-card-sections .card-body,
+          #fit-primary-card-sections .fit-section__button,
+          #fit-primary-card-sections .fit-section__body {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+          }
+
+          #card-tpg-flash #gvRow,
+          #card-tpg-flash tamsil,
+          #card-tkg-flash sktkh,
+          #fit-tunjangan-detail-tamsil tamsil {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            gap: 10px !important;
+          }
+
+          #card-tpg-flash .fit-tpg-month-col,
+          #card-tkg-flash .fit-tpg-month-col,
+          #fit-tunjangan-detail-tamsil .fit-tpg-month-col,
+          #card-tpg-flash .fit-tpg-month-card,
+          #card-tkg-flash .fit-tpg-month-card,
+          #fit-tunjangan-detail-tamsil .fit-tpg-month-card {
+            display: block !important;
+            grid-column: 1 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            box-sizing: border-box !important;
+          }
+
+          /* Adaptasi Card Galeri Budaya di Mobile agar Optimal */
+          #cardGaleriContainer {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+            padding: 0 0.5rem !important;
+          }
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 antialiased overflow-x-hidden">
+
+    <!-- Audio Latar Belakang -->
+    <audio id="bgAudio" loop preload="auto">
+        <source src="audio.mp3" type="audio/mpeg">
+    </audio>
+    <div id="draggableSoundContainer" class="fixed bottom-6 left-4 z-[999]">
+        <button onclick="toggleSound()" id="soundToggleBtn" class="bg-stone-700 hover:bg-stone-800 text-white p-3 sm:p-3.5 rounded-full shadow-2xl flex items-center gap-2 border-2 border-white transition transform hover:scale-110">
+            <span id="soundIcon" class="text-base sm:text-lg">🔇</span>
+            <span id="soundText" class="text-xs font-bold pr-1 hidden sm:inline" data-tr="sound_off">Sound Off</span>
+        </button>
+    </div>
+
+    <!-- Navbar -->
+    <header class="sticky top-0 z-[600] bg-white/95 backdrop-blur-md border-b border-stone-200">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-2 sm:space-x-3 overflow-hidden">
+                <div class="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
+                    <img src="logo.png" alt="Logo BPK" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-contain shadow-md bg-stone-100 p-0.5">
+                    <img src="Materi Pemaparan FPKBPK.png" alt="Logo FPKBPK" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-contain shadow-md bg-stone-100 p-0.5">
+                </div>
+                <div class="min-w-0">
+                    <span class="block text-sm sm:text-xl font-extrabold tracking-tight text-stone-900 truncate">BPK SULTENG</span>
+                    <span class="block text-[10px] sm:text-xs text-teal-700 font-medium tracking-wider uppercase truncate" data-tr="sub_prov">Provinsi Sulawesi Tengah</span>
+                </div>
+            </div>
+            <nav class="hidden md:flex space-x-6 text-sm font-semibold text-stone-600">
+                <a href="#beranda" onclick="tutupPetaKeBeranda()" class="hover:text-teal-700 transition" data-tr="nav_home">Beranda</a>
+                <a href="#tentang-kami-section" onclick="tutupPetaKeBeranda()" class="hover:text-teal-700 transition" data-tr="nav_about">Tentang Kami</a>
+                <a href="#video-section" onclick="tutupPetaKeBeranda()" class="hover:text-teal-700 transition" data-tr="nav_video">Video Dokumenter</a>
+                <a href="#tentang" onclick="tutupPetaKeBeranda()" class="hover:text-teal-700 transition" data-tr="nav_features">Fitur &amp; Galeri</a>
+                <a href="#peta-section" onclick="bukaPetaSecaraManual()" class="hover:text-teal-700 transition" data-tr="nav_map">Peta Interaktif</a>
+                <a href="#" onclick="bukaModalLogin()" id="navLoginBtn" class="text-teal-700 hover:text-teal-900 transition flex items-center gap-1" data-tr="nav_login">🔒 Login Admin</a>
+                <a href="#" onclick="bukaModalInput()" id="navInputBtn" class="hidden text-amber-700 hover:text-amber-900 transition flex items-center gap-1" data-tr="nav_input">✍️ Input Data</a>
+            </nav>
+            <div class="flex items-center space-x-2 flex-shrink-0">
+                <!-- Tombol Auto Translate Global Full Website & Q&A -->
+                <button onclick="toggleGlobalTranslate()" id="btnGlobalTranslate" class="px-3.5 py-2 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-900 text-xs font-bold transition flex items-center gap-1.5 border border-stone-300 cursor-pointer">
+                    🌐 <span id="translateLangLabel">EN</span>
+                </button>
+                <button onclick="bukaModalLogin()" id="btnAuthAction" class="px-3 sm:px-4 py-2 rounded-full bg-teal-700 text-white font-semibold text-[11px] sm:text-xs shadow-md hover:bg-teal-800 transition" data-tr="btn_login_admin">Login Admin</button>
+                <a href="#peta-section" onclick="bukaPetaSecaraManual()" class="px-3 sm:px-4 py-2 rounded-full bg-stone-900 text-white font-semibold text-[11px] sm:text-xs shadow-md hover:bg-black transition hidden sm:inline-block" data-tr="btn_open_map">Buka Peta</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="beranda" class="relative overflow-hidden pt-20 pb-24 sm:pt-24 sm:pb-28 bg-gradient-to-br from-stone-900 via-stone-800 to-teal-950 text-white">
+        <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#14b8a6_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <span class="inline-block px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-teal-500/15 border border-teal-400/30 text-teal-300 font-semibold text-[10px] sm:text-xs tracking-wide uppercase mb-6" data-tr="hero_badge">
+                FASILITASI KEMAJUAN KEBUDAYAAN PROVINSI SULAWESI TENGAH
+            </span>
+            <h1 class="text-3xl sm:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight mb-6" data-tr="hero_title">
+                Menjaga Warisan Nusantara Melalui <span class="text-teal-400">Teknologi Modern</span>
+            </h1>
+            <p class="text-sm sm:text-lg text-stone-300 max-w-2xl mx-auto mb-10 px-2" data-tr="hero_desc">
+                Platform inventarisasi budaya interaktif yang didukung basis data real-time, visualisasi panorama 360°, pemutaran video dokumenter, serta pemetaan geospasial yang akurat dan responsif di semua perangkat.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4 px-4">
+                <a href="#peta-section" onclick="bukaPetaSecaraManual()" class="px-8 py-3.5 rounded-xl bg-teal-600 hover:bg-teal-500 font-semibold text-white shadow-xl shadow-teal-900/40 transition" data-tr="btn_explore_map">Jelajahi Peta Interaktif</a>
+                <button onclick="bukaModalLogin()" id="heroLoginBtn" class="px-8 py-3.5 rounded-xl bg-stone-800/80 hover:bg-stone-700 border border-stone-600 font-semibold text-white transition" data-tr="btn_hero_login">Login &amp; Tambah Data Budaya</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Tentang Kami -->
+    <section id="tentang-kami-section" class="py-16 sm:py-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-[#13171B] border-2 border-[#D4AF37]/50 rounded-3xl overflow-hidden shadow-2xl text-stone-200">
+            <div class="px-6 py-5 bg-[#0C1014] border-b border-stone-800 flex items-center justify-between">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-2xl bg-[#C85A32] border border-[#D4AF37] flex items-center justify-center text-white font-bold text-xl shadow-lg">👥</div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-white" data-tr="about_us_title">Tentang Kami &amp; Kemitraan</h3>
+                        <p class="text-xs text-stone-400 font-light mt-0.5" data-tr="about_us_sub">Sistem Informasi Kebudayaan Sulawesi Tengah — Menghidupkan Warisan Sejarah</p>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-3 bg-[#171D22] border-b border-stone-800/80 flex items-center gap-2 overflow-x-auto">
+                <button onclick="gantiTabTentang('team')" id="btnTabTeam" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-[#C85A32] text-white shadow-md"><span data-tr="tab_team">👥 Tim Kerja &amp; Pengembang</span></button>
+                <button onclick="gantiTabTentang('partnerships')" id="btnTabPartnerships" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-stone-800/60 text-stone-300 hover:bg-stone-700/60"><span data-tr="tab_partners">🤝 Kolaborasi &amp; Kemitraan</span></button>
+                <button onclick="gantiTabTentang('background')" id="btnTabBackground" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-stone-800/60 text-stone-300 hover:bg-stone-700/60"><span data-tr="tab_vision">📖 Visi Proyek &amp; Objek Budaya</span></button>
+            </div>
+            <div class="p-6 sm:p-8 space-y-6 text-stone-300 text-xs sm:text-sm leading-relaxed font-light">
+                <div id="contentTeam" class="space-y-6">
+                    <div class="space-y-3">
+                        <h5 class="text-xs font-bold text-[#D4AF37] uppercase tracking-wider"><span data-tr="team_leader_title">✨ Pimpinan Tim Pengusul &amp; Tenaga Ahli:</span></h5>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="p-4 rounded-2xl bg-stone-900/90 border border-[#C85A32]/50 space-y-2 shadow-sm">
+                                <div class="text-[10px] font-bold text-[#C85A32] uppercase" data-tr="role_leader">Ketua Tim Pengusul</div>
+                                <h4 class="text-sm font-bold text-white">Ian Dwi Putera</h4>
+                                <p class="text-[11px] text-stone-400" data-tr="desc_leader">Inisiator digitalisasi situs sejarah.</p>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-stone-900/80 border border-stone-800 space-y-2 shadow-sm">
+                                <div class="text-[10px] font-bold text-sky-400 uppercase" data-tr="role_sec">Sekretaris</div>
+                                <h4 class="text-sm font-bold text-white">Andi Hendrawan</h4>
+                                <p class="text-[11px] text-stone-400" data-tr="desc_sec">Manajemen administrasi program.</p>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-stone-900/80 border border-stone-800 space-y-2 shadow-sm">
+                                <div class="text-[10px] font-bold text-emerald-400 uppercase" data-tr="role_treas">Bendahara</div>
+                                <h4 class="text-sm font-bold text-white">Annisa</h4>
+                                <p class="text-[11px] text-stone-400" data-tr="desc_treas">Pengelolaan keuangan dan pembukuan.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="contentPartnerships" class="space-y-5 hidden">
+                    <div class="p-5 rounded-2xl bg-stone-900/80 border border-stone-800 space-y-4">
+                        <h5 class="text-xs font-bold text-emerald-400 uppercase" data-tr="partner_title">🛡️ Dukungan Pembina Kebudayaan</h5>
+                        <p class="text-xs" data-tr="partner_desc">Dinas Pendidikan dan Kebudayaan Kabupaten Donggala &amp; Balai Pelestarian Kebudayaan Wilayah XVIII.</p>
+                    </div>
+                </div>
+                <div id="contentBackground" class="space-y-4 hidden">
+                    <div class="p-5 rounded-2xl bg-stone-900/80 border border-stone-800 space-y-2">
+                        <h5 class="text-xs font-bold text-[#D4AF37] uppercase" data-tr="vision_title">📖 Urgensi Digitalisasi</h5>
+                        <p class="text-xs" data-tr="vision_desc">Merawat dan mendokumentasikan warisan sejarah maritim serta arsitektur cagar budaya Donggala.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Video Dokumenter dengan Judul Otomatis dari Objek Budaya Spreadsheet -->
+    <section id="video-section" class="py-16 sm:py-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-8">
+            <span class="text-teal-700 font-bold text-xs sm:text-sm tracking-widest uppercase" data-tr="sub_docu">Dokumenter Visual</span>
+            <h2 id="videoTitleDynamic" class="text-2xl sm:text-3xl font-extrabold text-stone-900 mt-1">Video Pengenalan Warisan Budaya</h2>
+        </div>
+        <div class="w-full max-w-[560px] mx-auto rounded-3xl overflow-hidden shadow-2xl border-4 border-stone-200 bg-black">
+            <div id="videoContainerWrapper" class="video-responsive-container flex items-center justify-center text-stone-500 text-xs">
+                Memuat video dokumenter...
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Tentang & Statistik & Galeri -->
+    <section id="tentang" class="py-16 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
+            <span class="text-teal-700 font-bold text-xs sm:text-sm tracking-widest uppercase" data-tr="sub_directory">Fitur Unggulan &amp; Direktori</span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-stone-900 mt-1" data-tr="main_directory_title">Eksplorasi Budaya Dalam Genggaman</h2>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-4 sm:p-6 mb-12">
+            <h3 class="text-xs sm:text-sm font-black text-stone-900 uppercase tracking-wider mb-4 text-center" data-tr="stat_title">📊 Statistik Pengunjung Berdasarkan Kategori Direktori Visual</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
+                <div class="p-3 bg-amber-50 rounded-xl border border-amber-100"><span class="block text-xl font-black text-amber-700" id="statSitus">0</span><span class="text-[10px] font-bold text-stone-600 uppercase" data-tr="cat_situs">🏺 Situs</span></div>
+                <div class="p-3 bg-sky-50 rounded-xl border border-sky-100"><span class="block text-xl font-black text-sky-700" id="statKawasan">0</span><span class="text-[10px] font-bold text-stone-600 uppercase" data-tr="cat_kawasan">🗺️ Kawasan</span></div>
+                <div class="p-3 bg-orange-50 rounded-xl border border-orange-100"><span class="block text-xl font-black text-orange-700" id="statBangunan">0</span><span class="text-[10px] font-bold text-stone-600 uppercase" data-tr="cat_bangunan">🏛️ Bangunan & Struktur</span></div>
+            </div>
+        </div>
+
+        <div id="galeri-card-section" class="pt-8 border-t border-stone-200">
+            <h3 class="text-2xl font-extrabold text-stone-900 mb-6" data-tr="gallery_title">Galeri Objek &amp; Tur Virtual 360°</h3>
+            <div id="cardGaleriContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl border border-stone-200 text-center text-stone-400 col-span-full" data-tr="loading_gallery">Memuat data galeri card...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Map Section dengan Bingkai Etnik Budaya Donggala -->
+    <section id="peta-section" class="relative w-full h-screen bg-stone-900 border-t border-stone-800 hidden">
+        <div class="absolute top-3 right-3 sm:top-6 sm:right-6 z-[550]">
+            <button onclick="tutupPetaKeBeranda()" class="bg-stone-900/90 hover:bg-black text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xl border border-stone-700 transition flex items-center gap-2 cursor-pointer" data-tr="btn_close_map">✕ Tutup Peta</button>
+        </div>
+
+        <!-- Bingkai / Ornamen Etnik Keliling Peta Interaktif -->
+        <div class="absolute top-0 left-0 right-0 h-4 z-20 pointer-events-none overflow-hidden bg-[#e08e28] flex items-center justify-center border-b border-[#96540c]/40 shadow-xs"></div>
+        <div class="absolute bottom-0 left-0 right-0 h-4 z-20 pointer-events-none overflow-hidden bg-[#e08e28] flex items-center justify-center border-t border-[#96540c]/40 shadow-xs"></div>
+        <div class="absolute top-4 bottom-4 left-0 w-3.5 z-20 pointer-events-none overflow-hidden bg-[#e08e28] border-r border-[#96540c]/40"></div>
+        <div class="absolute top-4 bottom-4 right-0 w-3.5 z-20 pointer-events-none overflow-hidden bg-[#e08e28] border-l border-[#96540c]/40"></div>
+        <div class="absolute top-0 left-0 w-9 h-9 z-30 pointer-events-none bg-[#9e3d1b] border-r-2 border-b-2 border-[#ffd166] flex items-center justify-center text-[#ffd166] text-xs font-bold shadow-lg">✦</div>
+        <div class="absolute top-0 right-0 w-9 h-9 z-30 pointer-events-none bg-[#9e3d1b] border-l-2 border-b-2 border-[#ffd166] flex items-center justify-center text-[#ffd166] text-xs font-bold shadow-lg">✦</div>
+        <div class="absolute bottom-0 left-0 w-9 h-9 z-30 pointer-events-none bg-[#9e3d1b] border-r-2 border-t-2 border-[#ffd166] flex items-center justify-center text-[#ffd166] text-xs font-bold shadow-lg">✦</div>
+        <div class="absolute bottom-0 right-0 w-9 h-9 z-30 pointer-events-none bg-[#9e3d1b] border-l-2 border-t-2 border-[#ffd166] flex items-center justify-center text-[#ffd166] text-xs font-bold shadow-lg">✦</div>
+
+        <div id="map" class="absolute inset-0 z-0 w-full h-full"></div>
+        
+        <div class="absolute top-6 left-6 z-[400] flex items-center gap-2.5">
+            <button onclick="togglePencarianPeta()" title="Cari Objek" class="w-11 h-11 rounded-full bg-white/95 hover:bg-white text-stone-800 border border-stone-300 shadow-xl flex items-center justify-center transition cursor-pointer">🔍</button>
+            <div id="petaSearchContainer" class="hidden relative animate-in fade-in">
+                <div class="flex items-center bg-white rounded-full border border-stone-300 shadow-2xl pl-4 pr-2 py-1.5 w-64 sm:w-80">
+                    <input type="text" id="mapSearchInput" oninput="jalankanPencarianPeta(this.value)" placeholder="Cari situs, kelurahan, tahun..." class="w-full bg-transparent text-xs text-stone-800 focus:outline-none">
+                    <button onclick="togglePencarianPeta()" class="p-1 text-stone-400 hover:text-stone-700">✕</button>
+                </div>
+                <div id="mapSearchResultList" class="absolute top-full left-0 mt-2 w-72 sm:w-80 max-h-60 overflow-y-auto bg-white rounded-2xl border border-stone-200 shadow-2xl divide-y divide-stone-100 hidden z-50"></div>
+            </div>
+        </div>
+
+        <div class="absolute top-6 right-24 z-[400]">
+            <button onclick="resetPetaView()" title="Pusatkan Kembali" class="w-11 h-11 rounded-full bg-white/95 hover:bg-white text-stone-800 border border-stone-300 shadow-xl flex items-center justify-center transition cursor-pointer">🏠</button>
+        </div>
+
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-[400] max-w-[94%] sm:max-w-none">
+            <div class="bg-white/95 backdrop-blur-md p-1.5 sm:p-2 rounded-full border border-stone-300 shadow-2xl flex items-center gap-1.5 overflow-x-auto">
+                <button onclick="filterKategoriPeta('all')" id="btnCatAll" class="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition bg-stone-900 text-white"><span data-tr="filter_all">Semua</span> (<span id="countAll">0</span>)</button>
+                <button onclick="filterKategoriPeta('situs')" id="btnCatSitus" class="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition text-stone-700 hover:bg-stone-100" data-tr="filter_situs">🏺 Situs Cagar Budaya</button>
+                <button onclick="filterKategoriPeta('kawasan')" id="btnCatKawasan" class="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition text-stone-700 hover:bg-stone-100" data-tr="filter_kawasan">🗺️ Kawasan Cagar Budaya</button>
+                <button onclick="filterKategoriPeta('bangunan_struktur')" id="btnCatBangunan" class="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition text-stone-700 hover:bg-stone-100" data-tr="filter_bangunan">🏛️ Bangunan & Struktur</button>
+            </div>
+        </div>
+
+        <div id="inspectorCard" class="absolute top-20 right-6 max-w-sm w-[90%] sm:w-80 bg-white/98 backdrop-blur-xl rounded-3xl shadow-2xl p-4 z-[500] border border-stone-300 hidden">
+            <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span id="inspBadgeCat" class="text-[10px] px-2 py-0.5 rounded-full font-bold text-white shadow-xs bg-amber-600">Situs</span>
+                    <span id="inspYear" class="text-[10px] text-stone-500 font-semibold">Th. 1900</span>
+                </div>
+                <button onclick="tutupInspectorCard()" class="p-1 rounded-full text-stone-400 hover:text-stone-800">✕</button>
+            </div>
+            <div class="flex items-start gap-3 mt-2.5">
+                <img id="inspThumb" src="" class="w-16 h-16 rounded-2xl object-cover border border-stone-200 shadow-sm">
+                <div class="min-w-0 flex-1">
+                    <h4 id="inspTitle" class="text-sm font-bold text-stone-900 truncate">Nama Situs</h4>
+                    <p id="inspKelurahan" class="text-[11px] text-stone-500 truncate">Kelurahan</p>
+                </div>
+            </div>
+            <p id="inspDesc" class="mt-2.5 text-[11px] text-stone-600 line-clamp-2">Deskripsi singkat...</p>
+            <div class="mt-3.5 grid grid-cols-3 gap-1.5">
+                <button onclick="bukaTur360DariInspector()" class="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl bg-[#c85a32] text-white font-bold text-[11px] shadow-sm cursor-pointer"><span data-tr="btn_tour360">🌐 Tur 360°</span></button>
+                <button onclick="bukaLinimasaDariInspector()" class="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl bg-[#d97706] text-white font-bold text-[11px] shadow-sm cursor-pointer"><span data-tr="btn_timeline">⏳ Linimasa</span></button>
+                <a id="inspRouteBtn" href="#" target="_blank" class="flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl bg-[#1b4332] text-amber-300 font-bold text-[11px] border border-amber-300/40 text-center cursor-pointer"><span data-tr="btn_route">🧭 Rute</span></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal Tanya & Jawab Interaktif (Talking Tour) -->
+    <div id="modalTalkingTour" class="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-6">
+        <div class="relative w-full max-w-4xl max-h-[92vh] bg-[#11261f] border-2 border-[#d4af37]/60 rounded-3xl flex flex-col overflow-hidden shadow-2xl text-stone-100">
+            <div class="px-6 py-4.5 bg-[#0b1d17] border-b border-[#d4af37]/30 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-[#c85a32] border border-[#d4af37] flex items-center justify-center text-white text-xl">❓</div>
+                    <div>
+                        <h3 id="qaModalTitle" class="text-base sm:text-lg font-bold text-white" data-tr="qa_title">Tanya &amp; Jawab Interaktif</h3>
+                        <p id="qaSiteBadge" class="text-xs text-amber-200/80">Situs Sejarah</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="tutupModalTalkingTour()" class="p-2 rounded-xl bg-white/10 text-stone-300 hover:text-white">✕</button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <div class="lg:col-span-5 space-y-2.5" id="qaTopicsContainer"></div>
+                <div class="lg:col-span-7 flex flex-col justify-between p-5 rounded-3xl bg-black/40 border border-[#d4af37]/40 shadow-inner">
+                    <div class="space-y-4">
+                        <div class="pb-3 border-b border-white/10">
+                            <span id="qaActiveTag" class="text-[10px] px-2.5 py-1 rounded-md bg-[#d4af37]/20 text-[#d4af37] font-bold uppercase inline-block mb-2" data-tr="qa_topic_badge">Topik</span>
+                            <h3 id="qaActiveQuestion" class="text-base sm:text-lg font-bold text-white">Pertanyaan</h3>
+                        </div>
+                        <div id="qaActiveAnswer" class="text-xs sm:text-sm text-stone-200 leading-relaxed font-light space-y-3">Jawaban lengkap...</div>
+                    </div>
+                    <div class="pt-5 mt-4 border-t border-white/10 flex items-center justify-between">
+                        <span class="text-xs text-amber-200/90 font-medium" data-tr="audio_narration">🔊 Audio Narasi Jawaban</span>
+                        <button type="button" onclick="toggleCurrentVoice()" class="px-5 py-2.5 rounded-2xl font-bold text-xs bg-[#d4af37] text-[#11261f] hover:brightness-110 cursor-pointer" data-tr="btn_listen">Dengarkan Jawaban</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Linimasa -->
+    <div id="modalLinimasa" class="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-6">
+        <div class="relative w-full max-w-4xl bg-[#18181b] text-white rounded-3xl border border-stone-700 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
+            <div class="px-6 py-4 bg-[#141416] border-b border-stone-800 flex items-center justify-between">
+                <h3 id="linimasaTitle" class="text-lg font-bold font-serif-heading">Linimasa &amp; Komparasi Foto Sejarah</h3>
+                <button onclick="tutupLinimasa()" class="p-2 rounded-xl bg-stone-800 text-stone-300 hover:text-white">✕</button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4 flex-1">
+                <div class="relative w-full h-[350px] rounded-2xl overflow-hidden bg-black border border-stone-700">
+                    <img id="linimasaFotoKini" src="" class="absolute inset-0 w-full h-full object-cover">
+                    <div id="linimasaFotoLampauWrapper" class="absolute inset-0 h-full overflow-hidden border-r-2 border-[#d4af37]" style="width: 50%;">
+                        <img id="linimasaFotoLampau" src="" class="absolute inset-0 w-full h-full object-cover filter grayscale contrast-125">
+                    </div>
+                </div>
+                <div class="text-center text-xs text-stone-400" data-tr="timeline_hint">Gunakan geser slider atau kontrol perbandingan arsip foto masa lalu dan kini.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Login Admin -->
+    <div id="modalLogin" class="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="tutupModalLogin()" class="absolute top-4 right-4 text-stone-400 p-2">✕</button>
+            <h3 class="text-xl font-black text-stone-900 mb-4" data-tr="login_title">Login Administrator</h3>
+            <form onsubmit="prosesLogin(event)" class="space-y-4">
+                <input type="text" id="loginUser" placeholder="Username" required class="w-full bg-stone-100 border p-2.5 rounded-xl text-sm">
+                <input type="password" id="loginPass" placeholder="Password" required class="w-full bg-stone-100 border p-2.5 rounded-xl text-sm">
+                <div id="loginError" class="text-red-600 text-xs hidden"></div>
+                <button type="submit" class="w-full bg-teal-700 text-white font-bold py-3 rounded-xl" data-tr="btn_submit_login">Masuk Sistem</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Input Data Budaya (Admin Only) -->
+    <div id="modalInput" class="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="tutupModalInput()" class="absolute top-4 right-4 text-stone-400 p-2">✕</button>
+            <h3 class="text-xl font-black text-stone-900 mb-4">✍️ Tambah / Input Data Cagar Budaya</h3>
+            <form onsubmit="kirimDataBaru(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-stone-700 mb-1">Nama Objek Budaya</label>
+                    <input type="text" id="inputNama" required class="w-full bg-stone-100 border p-2.5 rounded-xl text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">Kategori</label>
+                        <select id="inputKategori" class="w-full bg-stone-100 border p-2.5 rounded-xl text-xs">
+                            <option value="Situs">Situs</option>
+                            <option value="Kawasan">Kawasan</option>
+                            <option value="Bangunan & Struktur">Bangunan & Struktur</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">Kelurahan / Wilayah</label>
+                        <input type="text" id="inputKelurahan" placeholder="Cth: Kelurahan Boya" required class="w-full bg-stone-100 border p-2.5 rounded-xl text-xs">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">Latitude</label>
+                        <input type="text" id="inputLat" placeholder="-0.6728" required class="w-full bg-stone-100 border p-2.5 rounded-xl text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">Longitude</label>
+                        <input type="text" id="inputLng" placeholder="119.7423" required class="w-full bg-stone-100 border p-2.5 rounded-xl text-xs">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-700 mb-1">URL Gambar Utama</label>
+                    <input type="url" id="inputGambar" placeholder="https://..." required class="w-full bg-stone-100 border p-2.5 rounded-xl text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-700 mb-1">URL Foto Panorama 360° (Opsional)</label>
+                    <input type="url" id="inputGambar360" placeholder="https://..." class="w-full bg-stone-100 border p-2.5 rounded-xl text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-700 mb-1">URL Video Dokumenter (YouTube Embed / MP4)</label>
+                    <input type="text" id="inputVideoUrl" placeholder="https://www.youtube.com/embed/..." class="w-full bg-stone-100 border p-2.5 rounded-xl text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-700 mb-1">Deskripsi Singkat</label>
+                    <textarea id="inputDeskripsi" rows="3" required class="w-full bg-stone-100 border p-2.5 rounded-xl text-xs"></textarea>
+                </div>
+                <div id="inputStatus" class="text-xs font-semibold text-teal-700 hidden">Menyimpan data ke Spreadsheet...</div>
+                <button type="submit" class="w-full bg-teal-700 text-white font-bold py-3 rounded-xl text-xs shadow-md">Simpan Data ke Database</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 360 Fullscreen -->
+    <div id="modal360" class="fixed inset-0 z-[9999] bg-black/95 hidden flex-col items-center justify-center p-4">
+        <button onclick="tutup360()" class="absolute top-6 right-6 text-white bg-white/10 rounded-full p-3 z-50 hover:bg-white/25 transition cursor-pointer">✕</button>
+        <div id="panorama-container" class="w-full h-full max-w-[1400px] max-h-[90vh] rounded-2xl overflow-hidden mx-auto shadow-2xl border border-stone-800"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-stone-900 text-stone-400 py-8 border-t border-stone-800">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm">
+            <p>&copy; 2026 Sistem Informasi Kebudayaan Sulawesi Tengah (Kombel Soubatik)</p>
+        </div>
+    </footer>
+
+    <!-- Leaflet & Pannellum JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+
+    <script>
+        var map = null;
+        var markerLayer = null;
+        var semuaDataBudaya = [];
+        var daftarUsersSpreadsheet = []; // Menyimpan data users/admin yang ditarik dari sheet "Users"
+        var viewer360 = null;
+        var petaSudahDimuat = false;
+        var isAdminLoggedIn = false;
+        var activeCategoryFilter = 'all';
+        var selectedInspectorItem = null;
+
+        var statistikPengunjung = { situs: 0, kawasan: 0, bangunan_struktur: 0 };
+        var gasUrl = 'https://script.google.com/macros/s/AKfycbwyC3bL6s6v9V6qXSIBvtd9zOoCvf0gXlf3BhMhgAuo7fR2J48wOlzEbISIfPVESg4HDQ/exec';
+
+        // --- KAMUS TRANSLASI OTOMATIS PENUH (ID <-> EN) ---
+        var currentLang = 'id';
+        var translationDictionary = {
+            'sub_prov': { id: 'Provinsi Sulawesi Tengah', en: 'Central Sulawesi Province' },
+            'nav_home': { id: 'Beranda', en: 'Home' },
+            'nav_about': { id: 'Tentang Kami', en: 'About Us' },
+            'nav_video': { id: 'Video Dokumenter', en: 'Documentary Video' },
+            'nav_features': { id: 'Fitur & Galeri', en: 'Features & Gallery' },
+            'nav_map': { id: 'Peta Interaktif', en: 'Interactive Map' },
+            'nav_login': { id: '🔒 Login Admin', en: '🔒 Admin Login' },
+            'nav_input': { id: '✍️ Input Data', en: '✍️ Input Data' },
+            'btn_login_admin': { id: 'Login Admin', en: 'Admin Login' },
+            'btn_open_map': { id: 'Buka Peta', en: 'Open Map' },
+            'hero_badge': { id: 'FASILITASI KEMAJUAN KEBUDAYAAN PROVINSI SULAWESI TENGAH', en: 'CENTRAL SULAWESI CULTURAL ADVANCEMENT FACILITATION' },
+            'hero_title': { id: 'Menjaga Warisan Nusantara Melalui <span class="text-teal-400">Teknologi Modern</span>', en: 'Preserving Nusantara Heritage Through <span class="text-teal-400">Modern Technology</span>' },
+            'hero_desc': { id: 'Platform inventarisasi budaya interaktif yang didukung basis data real-time, visualisasi panorama 360°, pemutaran video dokumenter, serta pemetaan geospasial yang akurat dan responsif di semua perangkat.', en: 'An interactive cultural inventory platform powered by real-time databases, 360° panorama visualization, documentary videos, and accurate geospatial mapping.' },
+            'btn_explore_map': { id: 'Jelajahi Peta Interaktif', en: 'Explore Interactive Map' },
+            'btn_hero_login': { id: 'Login & Tambah Data Budaya', en: 'Login & Add Culture Data' },
+            'about_us_title': { id: 'Tentang Kami & Kemitraan', en: 'About Us & Partnerships' },
+            'about_us_sub': { id: 'Sistem Informasi Kebudayaan Sulawesi Tengah — Menghidupkan Warisan Sejarah', en: 'Central Sulawesi Cultural Information System — Reviving Historical Heritage' },
+            'tab_team': { id: '👥 Tim Kerja & Pengembang', en: '👥 Team & Developers' },
+            'tab_partners': { id: '🤝 Kolaborasi & Kemitraan', en: '🤝 Collaborations & Partnerships' },
+            'tab_vision': { id: '📖 Visi Proyek & Objek Budaya', en: '📖 Project Vision & Culture Objects' },
+            'team_leader_title': { id: '✨ Pimpinan Tim Pengusul & Tenaga Ahli:', en: '✨ Proposing Team Leaders & Experts:' },
+            'role_leader': { id: 'Ketua Tim Pengusul', en: 'Team Leader' },
+            'desc_leader': { id: 'Inisiator digitalisasi situs sejarah.', en: 'Initiator of historical site digitalization.' },
+            'role_sec': { id: 'Sekretaris', en: 'Secretary' },
+            'desc_sec': { id: 'Manajemen administrasi program.', en: 'Program administration management.' },
+            'role_treas': { id: 'Bendahara', en: 'Treasurer' },
+            'desc_treas': { id: 'Pengelolaan keuangan dan pembukuan.', en: 'Financial management and bookkeeping.' },
+            'partner_title': { id: '🛡️ Dukungan Pembina Kebudayaan', en: '🛡️ Cultural Board Support' },
+            'partner_desc': { id: 'Dinas Pendidikan dan Kebudayaan Kabupaten Donggala & Balai Pelestarian Kebudayaan Wilayah XVIII.', en: 'Donggala Education and Culture Office & Cultural Preservation Center Region XVIII.' },
+            'vision_title': { id: '📖 Urgensi Digitalisasi', en: '📖 Digitalization Urgency' },
+            'vision_desc': { id: 'Merawat dan mendokumentasikan warisan sejarah maritim serta arsitektur cagar budaya Donggala.', en: 'Caring for and documenting maritime historical heritage and Donggala cultural architecture.' },
+            'sub_docu': { id: 'Dokumenter Visual', en: 'Visual Documentary' },
+            'sub_directory': { id: 'Fitur Unggulan & Direktori', en: 'Key Features & Directory' },
+            'main_directory_title': { id: 'Eksplorasi Budaya Dalam Genggaman', en: 'Cultural Exploration in Your Hands' },
+            'stat_title': { id: '📊 Statistik Pengunjung Berdasarkan Kategori Direktori Visual', en: '📊 Visitor Statistics by Visual Directory Category' },
+            'cat_situs': { id: '🏺 Situs', en: '🏺 Sites' },
+            'cat_kawasan': { id: '🗺️ Kawasan', en: '🗺️ Districts' },
+            'cat_bangunan': { id: '🏛️ Bangunan & Struktur', en: '🏛️ Buildings & Structures' },
+            'gallery_title': { id: 'Galeri Objek & Tur Virtual 360°', en: 'Object Gallery & 360° Virtual Tour' },
+            'loading_gallery': { id: 'Memuat data galeri card...', en: 'Loading gallery cards data...' },
+            'btn_close_map': { id: '✕ Tutup Peta', en: '✕ Close Map' },
+            'filter_all': { id: 'Semua', en: 'All' },
+            'filter_situs': { id: '🏺 Situs Cagar Budaya', en: '🏺 Heritage Sites' },
+            'filter_kawasan': { id: '🗺️ Kawasan Cagar Budaya', en: '🗺️ Heritage Districts' },
+            'filter_bangunan': { id: '🏛️ Bangunan & Struktur', en: '🏛️ Buildings & Structures' },
+            'btn_tour360': { id: '🌐 Tur 360°', en: '🌐 360° Tour' },
+            'btn_timeline': { id: '⏳ Linimasa', en: '⏳ Timeline' },
+            'btn_route': { id: '🧭 Rute', en: '🧭 Route' },
+            'qa_title': { id: 'Tanya & Jawab Interaktif', en: 'Interactive Q&A' },
+            'qa_topic_badge': { id: 'Topik', en: 'Topic' },
+            'audio_narration': { id: '🔊 Audio Narasi Jawaban', en: '🔊 Answer Audio Narration' },
+            'btn_listen': { id: 'Dengarkan Jawaban', en: 'Listen to Answer' },
+            'timeline_hint': { id: 'Gunakan geser slider atau kontrol perbandingan arsip foto masa lalu dan kini.', en: 'Use the slider or comparison controls for past and present archives.' },
+            'login_title': { id: 'Login Administrator', en: 'Administrator Login' },
+            'btn_submit_login': { id: 'Masuk Sistem', en: 'Sign In' },
+            'sound_off': { id: 'Sound Off', en: 'Sound Off' }
+        };
+
+        function toggleGlobalTranslate() {
+            currentLang = currentLang === 'id' ? 'en' : 'id';
+            document.getElementById('translateLangLabel').innerText = currentLang === 'id' ? 'EN' : 'ID';
+
+            document.querySelectorAll('[data-tr]').forEach(el => {
+                const key = el.getAttribute('data-tr');
+                if (translationDictionary[key]) {
+                    el.innerHTML = translationDictionary[key][currentLang];
+                }
+            });
+
+            renderCardGaleri(semuaDataBudaya);
+            if (currentQASite) renderTalkingTourModal();
+        }
+
+        function gantiTabTentang(tab) {
+            ['team', 'partnerships', 'background'].forEach(t => {
+                const contentEl = document.getElementById('content' + t.charAt(0).toUpperCase() + t.slice(1));
+                const btnEl = document.getElementById('btnTab' + t.charAt(0).toUpperCase() + t.slice(1));
+                if (contentEl) contentEl.classList.add('hidden');
+                if (btnEl) btnEl.className = "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-stone-800/60 text-stone-300 hover:bg-stone-700/60";
+            });
+            const activeContent = document.getElementById('content' + tab.charAt(0).toUpperCase() + tab.slice(1));
+            const activeBtn = document.getElementById('btnTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+            if (activeContent) activeContent.classList.remove('hidden');
+            if (activeBtn) activeBtn.className = "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-[#C85A32] text-white shadow-md";
+        }
+
+        // --- SISTEM LOGIN MENGAMBIL DARI SHEET "Users" DI SPREADSHEET ---
+        function bukaModalLogin() {
+            document.getElementById('modalLogin').classList.remove('hidden');
+            document.getElementById('modalLogin').classList.add('flex');
+        }
+
+        function tutupModalLogin() {
+            document.getElementById('modalLogin').classList.add('hidden');
+            document.getElementById('modalLogin').classList.remove('flex');
+        }
+
+        function prosesLogin(e) {
+            e.preventDefault();
+            var u = document.getElementById('loginUser').value.trim();
+            var p = document.getElementById('loginPass').value.trim();
+            
+            // Validasi mencocokkan input dengan data yang ditarik dari sheet "Users" (atau fallback bawaan)
+            let matchedUser = daftarUsersSpreadsheet.find(user => (user.username === u && user.password === p));
+            if (!matchedUser && u === 'admin' && p === 'admin123') {
+                matchedUser = { username: 'admin', role: 'admin' };
+            }
+
+            if (matchedUser) {
+                isAdminLoggedIn = true;
+                tutupModalLogin();
+                document.getElementById('navLoginBtn').innerHTML = "🔓 Admin Aktif";
+                document.getElementById('navInputBtn').classList.remove('hidden');
+                document.getElementById('btnAuthAction').innerText = "Tambah Data";
+                document.getElementById('btnAuthAction').setAttribute('onclick', 'bukaModalInput()');
+                alert("Login Berhasil! Selamat datang, " + matchedUser.username);
+            } else {
+                var err = document.getElementById('loginError');
+                err.innerText = "Username atau Password dari sheet Users tidak valid!";
+                err.classList.remove('hidden');
+            }
+        }
+
+        function bukaModalInput() {
+            if (!isAdminLoggedIn) {
+                bukaModalLogin();
+                return;
+            }
+            document.getElementById('modalInput').classList.remove('hidden');
+            document.getElementById('modalInput').classList.add('flex');
+        }
+
+        function tutupModalInput() {
+            document.getElementById('modalInput').classList.add('hidden');
+            document.getElementById('modalInput').classList.remove('flex');
+        }
+
+        function kirimDataBaru(e) {
+            e.preventDefault();
+            document.getElementById('inputStatus').classList.remove('hidden');
+            
+            var payload = {
+                nama: document.getElementById('inputNama').value,
+                kategori: document.getElementById('inputKategori').value,
+                kelurahan: document.getElementById('inputKelurahan').value,
+                lat: document.getElementById('inputLat').value,
+                lng: document.getElementById('inputLng').value,
+                gambar: document.getElementById('inputGambar').value,
+                gambar360: document.getElementById('inputGambar360').value,
+                videoUrl: document.getElementById('inputVideoUrl').value,
+                deskripsi: document.getElementById('inputDeskripsi').value
+            };
+
+            fetch(gasUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                alert("Data cagar budaya berhasil dikirim dan disimpan ke Spreadsheet!");
+                document.getElementById('inputStatus').classList.add('hidden');
+                tutupModalInput();
+                location.reload();
+            }).catch(() => {
+                alert("Gagal menyimpan data.");
+                document.getElementById('inputStatus').classList.add('hidden');
+            });
+        }
+
+        function muatVideoDokumenterDanJudul(itemBudaya) {
+            var wrapper = document.getElementById('videoContainerWrapper');
+            var titleEl = document.getElementById('videoTitleDynamic');
+            if (!wrapper) return;
+
+            var urlVideo = itemBudaya ? (itemBudaya.videoUrl || itemBudaya.video) : "";
+            var namaObjek = itemBudaya ? (itemBudaya.nama || itemBudaya.title) : "";
+
+            if (titleEl) {
+                if (namaObjek) {
+                    titleEl.innerText = (currentLang === 'en' ? "Documentary: " : "Video Pengenalan: ") + namaObjek;
+                } else {
+                    titleEl.innerText = (currentLang === 'en' ? "Cultural Heritage Video Introduction" : "Video Pengenalan Warisan Budaya");
+                }
+            }
+
+            if (!urlVideo || urlVideo.trim() === "") {
+                wrapper.innerHTML = `<div class="text-stone-400 text-xs text-center p-4">Video dokumenter belum diatur pada objek ini.</div>`;
+                return;
+            }
+
+            let embedUrl = urlVideo;
+            if (urlVideo.includes("youtube.com/watch?v=")) {
+                const videoId = urlVideo.split('v=')[1].split('&')[0];
+                embedUrl = `https://www.youtube.com/embed/${videoId}`;
+            } else if (urlVideo.includes("youtu.be/")) {
+                const videoId = urlVideo.split('youtu.be/')[1].split('?')[0];
+                embedUrl = `https://www.youtube.com/embed/${videoId}`;
+            }
+
+            if (embedUrl.includes("youtube.com/embed/")) {
+                wrapper.innerHTML = `<iframe width="560" height="315" src="${embedUrl}" title="Video Dokumenter Budaya" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            } else {
+                wrapper.innerHTML = `<video width="560" height="315" controls src="${embedUrl}"></video>`;
+            }
+        }
+
+        function getSiteHeritageCategory(item) {
+            const id = (item.id || '').toLowerCase();
+            const title = (item.nama || item.title || '').toLowerCase();
+            const cat = (item.kategori || item.category || '').toLowerCase();
+
+            if (id.includes('makam') || title.includes('makam') || id.includes('situs') || cat.includes('makam') || cat.includes('arkeologi') || cat.includes('alam')) {
+                return 'situs';
+            }
+            if (id.includes('dermaga') || id.includes('pelabuhan') || id.includes('tenun') || id.includes('kawasan') || title.includes('dermaga') || title.includes('pelabuhan') || title.includes('sentra') || cat.includes('kawasan')) {
+                return 'kawasan';
+            }
+            return 'bangunan_struktur';
+        }
+
+        function perbaruiUIStatistik() {
+            document.getElementById('statSitus').innerText = statistikPengunjung.situs || 0;
+            document.getElementById('statKawasan').innerText = statistikPengunjung.kawasan || 0;
+            document.getElementById('statBangunan').innerText = statistikPengunjung.bangunan_struktur || 0;
+        }
+
+        function tambahPengunjung(kategoriKey) {
+            if (statistikPengunjung[kategoriKey] !== undefined) {
+                statistikPengunjung[kategoriKey]++;
+            }
+            perbaruiUIStatistik();
+        }
+
+        function inisialisasiPeta() {
+            if (petaSudahDimuat) return;
+            map = L.map('map', { center: [-0.6728, 119.7423], zoom: 15, zoomControl: false });
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+            L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'] }).addTo(map);
+            markerLayer = L.layerGroup().addTo(map);
+            petaSudahDimuat = true;
+            if (semuaDataBudaya.length > 0) renderMarkers(semuaDataBudaya);
+        }
+
+        function bukaPetaSecaraManual() {
+            document.getElementById('peta-section').classList.remove('hidden');
+            setTimeout(() => { inisialisasiPeta(); if (map) map.invalidateSize(); }, 100);
+        }
+
+        function tutupPetaKeBeranda() {
+            document.getElementById('peta-section').classList.add('hidden');
+            tutupInspectorCard();
+            tutup360();
+        }
+
+        function resetPetaView() {
+            if (map) map.setView([-0.6728, 119.7423], 15);
+            tutupInspectorCard();
+            activeCategoryFilter = 'all';
+            renderMarkers(semuaDataBudaya);
+        }
+
+        function togglePencarianPeta() {
+            const box = document.getElementById('petaSearchContainer');
+            box.classList.toggle('hidden');
+            if (!box.classList.contains('hidden')) {
+                document.getElementById('mapSearchInput').focus();
+            }
+        }
+
+        function jalankanPencarianPeta(keyword) {
+            const listEl = document.getElementById('mapSearchResultList');
+            if (!keyword.trim()) {
+                listEl.classList.add('hidden');
+                return;
+            }
+            const filtered = semuaDataBudaya.filter(item => (item.nama || item.title || '').toLowerCase().includes(keyword.toLowerCase()) || (item.kelurahan || '').toLowerCase().includes(keyword.toLowerCase()));
+            listEl.innerHTML = '';
+            if (filtered.length === 0) {
+                listEl.innerHTML = '<div class="p-3 text-xs text-stone-500">Tidak ditemukan.</div>';
+            } else {
+                filtered.forEach(item => {
+                    listEl.innerHTML += `<div onclick='pilihItemPencarian(${JSON.stringify(item)})' class="p-2.5 hover:bg-amber-50 cursor-pointer text-xs font-bold text-stone-800">${item.nama || item.title} <span class="block font-normal text-[10px] text-stone-500">${item.kelurahan || ''}</span></div>`;
+                });
+            }
+            listEl.classList.remove('hidden');
+        }
+
+        function pilihItemPencarian(item) {
+            document.getElementById('petaSearchContainer').classList.add('hidden');
+            if (map && item.lat && item.lng) {
+                map.flyTo([parseFloat(item.lat), parseFloat(item.lng)], 17, { duration: 1.2 });
+            }
+            bukaInspectorCard(item);
+        }
+
+        function filterKategoriPeta(catKey) {
+            activeCategoryFilter = catKey;
+            ['All', 'Situs', 'Kawasan', 'Bangunan'].forEach(k => {
+                const el = document.getElementById('btnCat' + k);
+                if (el) el.className = "flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition text-stone-700 hover:bg-stone-100";
+            });
+            const activeEl = document.getElementById('btnCat' + catKey.charAt(0).toUpperCase() + catKey.slice(1));
+            if (activeEl) activeEl.className = "flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition bg-stone-900 text-white";
+            
+            const filtered = catKey === 'all' ? semuaDataBudaya : semuaDataBudaya.filter(i => getSiteHeritageCategory(i) === catKey);
+            renderMarkers(filtered);
+        }
+
+        function createHeritagePinIcon(catKey, isSelected) {
+            let color = '#c85a32', emoji = '🏛️';
+            if (catKey === 'situs') { color = '#d97706'; emoji = '🏺'; }
+            else if (catKey === 'kawasan') { color = '#0284c7'; emoji = '🗺️'; }
+            else if (catKey === 'bangunan_struktur') { color = '#c85a32'; emoji = '🏛️'; }
+
+            const size = isSelected ? 40 : 34;
+            const html = `
+                <div style="display: flex; align-items: center; justify-content: center; cursor: pointer; transform: translate(-50%, -50%);">
+                    <div style="width: ${size}px; height: ${size}px; border-radius: 50%; background-color: ${color}; border: 2.5px solid #ffffff; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                        ${emoji}
+                    </div>
+                </div>
+            `;
+            return L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2] });
+        }
+
+        function renderMarkers(data) {
+            if (!markerLayer) return;
+            markerLayer.clearLayers();
+            data.forEach(item => {
+                if (item.lat && item.lng) {
+                    const catKey = getSiteHeritageCategory(item);
+                    const isSelected = selectedInspectorItem && selectedInspectorItem.id === item.id;
+                    const marker = L.marker([parseFloat(item.lat), parseFloat(item.lng)], { icon: createHeritagePinIcon(catKey, isSelected) });
+                    marker.on('click', () => {
+                        if (map) map.flyTo([parseFloat(item.lat), parseFloat(item.lng)], 17);
+                        bukaInspectorCard(item);
+                    });
+                    markerLayer.addLayer(marker);
+                }
+            });
+        }
+
+        function bukaInspectorCard(item) {
+            selectedInspectorItem = item;
+            const catKey = getSiteHeritageCategory(item);
+            tambahPengunjung(catKey);
+
+            document.getElementById('inspBadgeCat').innerText = catKey.toUpperCase();
+            document.getElementById('inspYear').innerText = (currentLang === 'en' ? 'Est. ' : 'Th. ') + (item.establishedYear || '1900');
+            document.getElementById('inspThumb').src = item.gambar || item.thumbnail || 'https://images.unsplash.com/photo-1599581971775-f938a4128919?auto=format&fit=crop&q=80&w=800';
+            document.getElementById('inspTitle').innerText = item.nama || item.title || 'Objek Budaya';
+            document.getElementById('inspKelurahan').innerText = item.kelurahan || 'Kota Tua Donggala';
+            document.getElementById('inspDesc').innerText = item.deskripsi || item.briefDescription || '';
+            document.getElementById('inspRouteBtn').href = `https://www.google.com/maps/dir/?api=1&destination=${item.lat},${item.lng}`;
+            
+            muatVideoDokumenterDanJudul(item);
+            document.getElementById('inspectorCard').classList.remove('hidden');
+        }
+
+        function tutupInspectorCard() {
+            selectedInspectorItem = null;
+            document.getElementById('inspectorCard').classList.add('hidden');
+        }
+
+        function bukaTur360DariInspector() {
+            if (selectedInspectorItem && selectedInspectorItem.gambar360) {
+                buka360(selectedInspectorItem.gambar360);
+            } else {
+                alert(currentLang === 'en' ? "360° Tour is not yet available for this object." : "Tur Panorama 360° belum tersedia untuk objek ini.");
+            }
+        }
+
+        function bukaLinimasaDariInspector() {
+            if (selectedInspectorItem) {
+                document.getElementById('linimasaTitle').innerText = (currentLang === 'en' ? "Timeline: " : "Linimasa: ") + (selectedInspectorItem.nama || selectedInspectorItem.title);
+                document.getElementById('linimasaFotoKini').src = selectedInspectorItem.gambar || selectedInspectorItem.thumbnail || '';
+                document.getElementById('linimasaFotoLampau').src = selectedInspectorItem.gambar || selectedInspectorItem.thumbnail || '';
+                document.getElementById('modalLinimasa').classList.remove('hidden');
+                document.getElementById('modalLinimasa').classList.add('flex');
+            }
+        }
+
+        function tutupLinimasa() {
+            document.getElementById('modalLinimasa').classList.add('hidden');
+            document.getElementById('modalLinimasa').classList.remove('flex');
+        }
+
+        function renderCardGaleri(data) {
+            var container = document.getElementById('cardGaleriContainer');
+            if (!container) return;
+            container.innerHTML = "";
+            if (!data || data.length === 0) {
+                container.innerHTML = `<div class="bg-white p-6 rounded-xl border border-stone-200 text-center text-stone-400 col-span-full">${currentLang === 'en' ? 'No data available.' : 'Tidak ada data.'}</div>`;
+                return;
+            }
+            data.forEach(item => {
+                var imgUrl = item.gambar ? item.gambar.split(',')[0].trim() : "https://images.unsplash.com/photo-1599581971775-f938a4128919?auto=format&fit=crop&q=80&w=800";
+                var has360 = item.gambar360 && item.gambar360.trim() !== "";
+                var katKey = getSiteHeritageCategory(item);
+                var btnMapText = currentLang === 'en' ? '🗺️ Map' : '🗺️ Peta';
+                var btnQAText = currentLang === 'en' ? '❓ Q&A' : '❓ Tanya Jawab';
+                var btn360Text = currentLang === 'en' ? '🌐 360° Tour' : '🌐 Tur 360°';
+
+                container.innerHTML += `
+                    <div class="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between">
+                        <div>
+                            <div class="relative h-48 w-full cursor-pointer overflow-hidden group" onclick="perbesarGambar('${imgUrl}')">
+                                <img src="${imgUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                ${has360 ? '<div class="absolute top-3 right-3 bg-purple-600 text-white text-[11px] px-2.5 py-1 rounded-full font-bold shadow-md">🌐 360°</div>' : ''}
+                            </div>
+                            <div class="p-5">
+                                <span class="text-[11px] font-bold text-teal-700 uppercase">${katKey}</span>
+                                <h4 class="font-bold text-stone-900 text-base mt-1 mb-2">${item.nama || item.title || 'Objek'}</h4>
+                                <p class="text-stone-600 text-xs">${item.deskripsi ? item.deskripsi.substring(0, 80) + '...' : ''}</p>
+                            </div>
+                        </div>
+                        <div class="px-5 pb-5 pt-2 flex flex-wrap items-center gap-2 border-t border-stone-100">
+                            <button onclick="bukaPetaDanPilih('${item.lat}', '${item.lng}')" class="flex-1 bg-stone-100 text-stone-800 text-xs font-bold py-2 rounded-xl cursor-pointer">${btnMapText}</button>
+                            <button onclick='bukaModalTalkingTour(${JSON.stringify(item)})' class="flex-1 bg-amber-600 text-white text-xs font-bold py-2 rounded-xl shadow-md cursor-pointer">${btnQAText}</button>
+                            ${has360 ? `<button onclick="buka360('${item.gambar360.trim()}')" class="flex-1 bg-teal-700 text-white text-xs font-bold py-2 rounded-xl shadow-md cursor-pointer">${btn360Text}</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function bukaPetaDanPilih(lat, lng) {
+            bukaPetaSecaraManual();
+            if (map && lat && lng) map.setView([parseFloat(lat), parseFloat(lng)], 17);
+        }
+
+        var currentQASite = null;
+        var selectedTopicId = 'topic-history';
+
+        function bukaModalTalkingTour(item) {
+            currentQASite = item;
+            selectedTopicId = 'topic-history';
+            renderTalkingTourModal();
+            document.getElementById('modalTalkingTour').classList.remove('hidden');
+            document.getElementById('modalTalkingTour').classList.add('flex');
+        }
+
+        function tutupModalTalkingTour() {
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            document.getElementById('modalTalkingTour').classList.add('hidden');
+            document.getElementById('modalTalkingTour').classList.remove('flex');
+        }
+
+        function renderTalkingTourModal() {
+            if (!currentQASite) return;
+            const site = currentQASite;
+            const nama = site.nama || site.title || "Situs Budaya";
+            const desk = site.deskripsi || site.briefDescription || "Informasi mendalam mengenai cagar budaya ini.";
+
+            const topics = currentLang === 'en' ? [
+                { id: 'topic-history', tag: 'History', topicTitle: `History of ${nama}`, question: `What is the historical background of this site?`, answer: desk },
+                { id: 'topic-architecture', tag: 'Architecture', topicTitle: 'Architectural Style', question: 'What are the unique architectural features?', answer: 'This heritage site demonstrates authentic traditional and colonial architectural forms specific to Donggala.' },
+                { id: 'topic-cultural', tag: 'Cultural Value', topicTitle: 'Cultural Significance', question: 'Why is this site important to the local community?', answer: 'It serves as an invaluable historical marker of maritime and colonial legacy in Central Sulawesi.' }
+            ] : [
+                { id: 'topic-history', tag: 'Sejarah', topicTitle: `Sejarah ${nama}`, question: `Bagaimana sejarah berdirinya situs ini?`, answer: desk },
+                { id: 'topic-architecture', tag: 'Arsitektur', topicTitle: 'Gaya Arsitektur', question: 'Apa ciri khas arsitektur objek budaya ini?', answer: 'Objek cagar budaya ini menampilkan bentuk arsitektur tradisional dan kolonial khas Donggala.' },
+                { id: 'topic-cultural', tag: 'Nilai Budaya', topicTitle: 'Signifikansi Budaya', question: 'Mengapa situs ini penting bagi masyarakat lokal?', answer: 'Situs ini menjadi penanda sejarah warisan maritim dan kolonial yang tak ternilai harganya di Sulawesi Tengah.' }
+            ];
+
+            const activeTopic = topics.find(t => t.id === selectedTopicId) || topics[0];
+            document.getElementById('qaSiteBadge').innerText = nama;
+            
+            let topicsHTML = '';
+            topics.forEach(t => {
+                const isSel = t.id === selectedTopicId;
+                topicsHTML += `<button onclick="selectedTopicId='${t.id}'; renderTalkingTourModal();" class="w-full text-left p-3.5 rounded-2xl border transition cursor-pointer ${isSel ? 'bg-[#c85a32] border-[#d4af37] text-white' : 'bg-black/30 text-stone-300'}"><h4 class="text-xs font-bold">${t.topicTitle}</h4></button>`;
+            });
+            document.getElementById('qaTopicsContainer').innerHTML = topicsHTML;
+            document.getElementById('qaActiveTag').innerText = activeTopic.tag;
+            document.getElementById('qaActiveQuestion').innerText = `"${activeTopic.question}"`;
+            document.getElementById('qaActiveAnswer').innerHTML = `<p>${activeTopic.answer}</p>`;
+        }
+
+        function toggleCurrentVoice() {
+            if (!currentQASite) return;
+            const ansText = document.getElementById('qaActiveAnswer').innerText;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(ansText);
+                utterance.lang = currentLang === 'en' ? 'en-US' : 'id-ID';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Pengambilan data dari endpoint Google Apps Script termasuk sheet "Users"
+        fetch(gasUrl)
+            .then(res => res.json())
+            .then(data => {
+                semuaDataBudaya = data.dataBudaya || [];
+                // Mengambil data pengguna dari sheet "Users" (mendukung key .users, .userList, atau .adminList)
+                daftarUsersSpreadsheet = data.users || data.userList || data.adminList || data.admins || [];
+                
+                document.getElementById('countAll').innerText = semuaDataBudaya.length;
+                renderCardGaleri(semuaDataBudaya);
+                if (petaSudahDimuat) renderMarkers(semuaDataBudaya);
+
+                if (semuaDataBudaya.length > 0) {
+                    muatVideoDokumenterDanJudul(semuaDataBudaya[0]);
+                } else {
+                    muatVideoDokumenterDanJudul({ nama: "Warisan Budaya", videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" });
+                }
+            })
+            .catch(() => {
+                semuaDataBudaya = [
+                    { id: "SITUS-01", nama: "Kompleks Makam Raja Banawa", kategori: "Situs", kelurahan: "Kelurahan Boneoge", lat: -0.6728, lng: 119.7423, deskripsi: "Makam bersejarah penguasa kerajaan Banawa.", establishedYear: 1850, gambar360: "https://pannellum.org/images/alma.jpg", videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" },
+                    { id: "KWS-01", nama: "Kawasan Pelabuhan Tua Boya", kategori: "Kawasan", kelurahan: "Kelurahan Boya", lat: -0.6800, lng: 119.7500, deskripsi: "Pelabuhan perdagangan maritim kolonial.", establishedYear: 1910, gambar360: "https://pannellum.org/images/alma.jpg", videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" }
+                ];
+                daftarUsersSpreadsheet = [{ username: 'admin', password: 'admin123' }];
+                document.getElementById('countAll').innerText = semuaDataBudaya.length;
+                renderCardGaleri(semuaDataBudaya);
+                muatVideoDokumenterDanJudul(semuaDataBudaya[0]);
+            });
+
+        function perbesarGambar(url) {
+            window.open(url, '_blank');
+        }
+
+        function buka360(url) {
+            document.getElementById('modal360').classList.add('flex');
+            document.getElementById('modal360').classList.remove('hidden');
+            if (viewer360) viewer360.destroy();
+
+            viewer360 = pannellum.viewer('panorama-container', { 
+                "type": "equirectangular", 
+                "panorama": url, 
+                "autoLoad": true,
+                "autoRotate": -2,
+                "compass": true,
+                "showControls": true
+            });
+        }
+
+        function tutup360() {
+            document.getElementById('modal360').classList.add('hidden');
+            document.getElementById('modal360').classList.remove('flex');
+            if (viewer360) { viewer360.destroy(); viewer360 = null; }
+        }
+
+        function toggleSound() {
+            var audio = document.getElementById('bgAudio');
+            var icon = document.getElementById('soundIcon');
+            if (audio.paused) {
+                audio.play().then(() => { icon.innerText = "🔊"; }).catch(() => alert("Audio di-block browser."));
+            } else {
+                audio.pause(); icon.innerText = "🔇";
+            }
+        }
+    </script>
+</body>
+</html>
